@@ -1,113 +1,191 @@
-import Image from "next/image";
+"use client";
+import React, { useEffect, useState } from 'react';
+import JobCodeFetcher from './components/JobCodeFetcher';
+import TaskFetcher from './components/TaskFetcher';
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip } from 'antd';
+interface Task {
+  key: string;
+  jobCode: string | null;
+  taskUrl: string | null;
+  duration: number | null;
 }
+
+const Page = () => {
+  const [selectedJobCode, setSelectedJobCode] = useState<string | null | undefined>(null);
+  const [taskUrl, setTaskUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const sendDataToGoogleSheets = async (jobCode: string | null, duration: number | null, taskUrl: string | null) => {
+    //     if (jobCode && duration) {
+    try {
+      const response = await fetch('/api/sendtosheets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ jobCode, duration, taskUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send data to Google Sheets');
+      }
+
+      alert('Data sent to Google Sheets successfully');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  const columns = [
+    {
+      title: 'Job Code',
+      dataIndex: 'jobCode',
+      key: 'jobCode',
+    },
+    {
+      title: 'Task URL',
+      dataIndex: 'taskUrl',
+      key: 'taskUrl',
+      width: '30%', // Set the width of the Task URL column to 30%
+      render: (text: string | null) => (
+        <Tooltip title={text}>
+          <a href={text || ''}>
+            {text && text.length > 20 ? text.substring(0, 20) + '...' : text}
+          </a>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (duration: number | null) => {
+        if (duration === null) {
+          return null;
+        }
+
+        const minutes = Math.floor(duration / 60000);
+        const seconds = ((duration % 60000) / 1000).toFixed(0);
+        return minutes + ":" + (Number(seconds) < 10 ? '0' : '') + seconds;
+      },
+    },
+  ];
+
+
+
+  const handleStart = () => {
+    const start = Date.now();
+    setStartTime(start);
+    setIsRunning(true);
+    localStorage.setItem('isRunning', 'true');
+    localStorage.setItem('startTime', start.toString());
+    localStorage.setItem('jobCode', selectedJobCode || '');
+    localStorage.setItem('taskUrl', taskUrl || '');
+  };
+
+
+  const handleStop = async () => {
+    const storedStartTime = localStorage.getItem('startTime');
+    if (storedStartTime !== null) {
+      const duration = Date.now() - Number(storedStartTime);
+      if (!selectedJobCode) {
+        // selectedJobCode is undefined or empty, return early
+        return;
+      }
+      await sendDataToGoogleSheets(selectedJobCode, duration, taskUrl);
+      setFetchTrigger(fetchTrigger + 1);
+      setIsRunning(false);
+      setSelectedJobCode(undefined); 
+      setTaskUrl('');
+      localStorage.removeItem('isRunning');
+      localStorage.removeItem('startTime');
+      localStorage.removeItem('jobCode');
+      localStorage.removeItem('taskUrl');
+    }
+  };
+
+  useEffect(() => {
+    const storedIsRunning = localStorage.getItem('isRunning');
+    const storedStartTime = localStorage.getItem('startTime');
+    const storedJobCode = localStorage.getItem('jobCode');
+    const storedTaskUrl = localStorage.getItem('taskUrl');
+  
+    if (storedIsRunning) {
+      setIsRunning(true);
+    }
+  
+    if (storedStartTime) {
+      setStartTime(Number(storedStartTime));
+    }
+  
+    if (storedJobCode) {
+      setSelectedJobCode(storedJobCode);
+    }
+  
+    if (storedTaskUrl) {
+      setTaskUrl(storedTaskUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    
+    // Simulate a loading delay
+    setTimeout(() => {
+      setIsLoading(false); // Set isLoading to false after the components have loaded
+    }, 2000); // Change this to your actual loading time
+  }, []);
+
+  return (
+    isLoading ? (
+      <Skeleton active /> // Display the Skeleton component when isLoading is true
+    ) : (
+      <Row gutter={16}>
+        <Col span={8}>
+          <Card title="Task Info" style={{ minHeight: '300px' }}>
+            <JobCodeFetcher>
+              {(jobCodes) => (
+                <Select
+                  style={{ width: '100%' }} // Set the width to 100%
+                  placeholder="Select a job code" // Add a placeholder
+                  onChange={code => setSelectedJobCode(code)}
+                  value={selectedJobCode}
+                  disabled={isRunning}
+                >
+                  {jobCodes.map(code => (
+                    <Select.Option key={code} value={code}>
+                      {code}
+                    </Select.Option>
+                  ))}
+                </Select>
+              )}
+            </JobCodeFetcher>
+            <Input placeholder="Task URL" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning}/>
+            <Button type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
+            <Button danger type="primary" onClick={handleStop} disabled={!isRunning}>Stop</Button>
+          </Card>
+        </Col>
+        <Col span={16}>
+          <Card title="Dashboard" style={{ minHeight: '300px' }}>
+            <h2>Tasks</h2>
+            <div>
+              <TaskFetcher trigger={fetchTrigger}>
+                {(tasks, isLoading) => (
+                  isLoading ? (
+                    <Skeleton active />
+                  ) : (
+                    <Table key={fetchTrigger} dataSource={tasks} columns={columns} />
+                  )
+                )}
+              </TaskFetcher>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    )
+  );
+};
+
+export default Page;
