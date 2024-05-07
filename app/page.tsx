@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import JobCodeFetcher from './components/JobCodeFetcher';
 import TaskFetcher from './components/TaskFetcher';
 
-import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip } from 'antd';
+import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin } from 'antd';
+import AverageDurationCard from './components/AverageDurationCard';
 interface Task {
   key: string;
   jobCode: string | null;
@@ -24,7 +25,7 @@ const Page = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const [startTime, setStartTime] = useState<number | null>(null);
-  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null,date: string | null) => {
+  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null) => {
     //     if (jobCode && duration) {
     console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date });
     try {
@@ -137,7 +138,7 @@ const Page = () => {
 
     if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
       const duration = Date.now() - Number(storedStartTime);
-      await sendDataToGoogleSheets(storedJobCode,  storedTaskUrl, duration, storedDate);
+      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate);
       setFetchTrigger(fetchTrigger + 1);
       setIsRunning(false);
       setSelectedJobCode('');
@@ -186,13 +187,13 @@ const Page = () => {
       <Skeleton active /> // Display the Skeleton component when isLoading is true
     ) : (
       <Row gutter={16}>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <Card title="Task Info" style={{ minHeight: '300px' }}>
+            <label htmlFor="jobCodeSelect">Job Code</label>
             <JobCodeFetcher>
               {(jobCodes) => (
                 <Select
                   style={{ width: '100%' }} // Set the width to 100%
-                  placeholder="Select a job code" // Add a placeholder
                   onChange={code => setSelectedJobCode(code)}
                   value={selectedJobCode}
                   disabled={isRunning}
@@ -205,22 +206,38 @@ const Page = () => {
                 </Select>
               )}
             </JobCodeFetcher>
-            <Input placeholder="Task URL" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
-            <Button type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
-            <Button danger type="primary" onClick={handleStop} disabled={!isRunning}>Stop</Button>
+            <label htmlFor="taskUrlInput" style={{ marginTop: '10px' }}>Task URL</label>
+            <Input id="taskUrlInput" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+              <Button size="large" type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
+              <Button danger size="large" type="primary" onClick={handleStop} disabled={!isRunning}>Stop</Button>
+            </div>
+            {isRunning && (
+              <div className="mt-4 flex items-center justify-center">
+                <Spin size="large" /> {/* This is the larger spinner */}
+                <p className="text-lg text-blue-500 ml-4">Task in progress</p> {/* This is the styled text */}
+              </div>
+            )}
           </Card>
         </Col>
-        <Col span={16}>
+        <Col xs={24} sm={24} md={16} lg={16} xl={16}>
+
           <Card title="Dashboard" style={{ minHeight: '300px' }}>
-            <h2>Tasks</h2>
             <div>
-            <TaskFetcher trigger={fetchTrigger}>
+              <TaskFetcher trigger={fetchTrigger}>
                 {(tasks, isLoading) => (
-                  isLoading ? (
-                    <Skeleton active />
-                  ) : (
-                    <Table key={fetchTrigger} dataSource={tasks} columns={columns} />
-                  )
+                  <>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px'}}>
+                      <AverageDurationCard tasks={tasks} />
+                    </Col>
+                  {isLoading ? (
+                      <Skeleton active />
+                    ) : (
+                      <Col xs={24} sm={24} md={12} lg={24} xl={24}>
+                      <Table key={fetchTrigger} dataSource={tasks} columns={columns} />
+                      </Col>
+                    )}
+                  </>
                 )}
               </TaskFetcher>
             </div>
