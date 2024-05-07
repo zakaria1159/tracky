@@ -17,17 +17,19 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [taskToResume, setTaskToResume] = useState<Task | null>(null);
 
   const [startTime, setStartTime] = useState<number | null>(null);
   const sendDataToGoogleSheets = async (jobCode: string | null, duration: number | null, taskUrl: string | null) => {
     //     if (jobCode && duration) {
+      console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl });
     try {
       const response = await fetch('/api/sendtosheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ jobCode, duration, taskUrl }),
+        body: JSON.stringify({ jobCode, taskUrl, duration }),
       });
 
       if (!response.ok) {
@@ -72,9 +74,35 @@ const Page = () => {
         return minutes + ":" + (Number(seconds) < 10 ? '0' : '') + seconds;
       },
     },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (text: string, record: Task) => (
+        <Button onClick={() => {
+          if (record.jobCode && record.taskUrl) {
+            handleResume(record.jobCode, record.taskUrl);
+          }
+        }}>Resume</Button>
+      ),
+    },
   ];
 
-
+  const handleResume = (jobCode: string, url: string) => {
+    const start = Date.now();
+    setIsRunning(true);
+    setStartTime(start);
+    setSelectedJobCode(jobCode);
+    setTaskUrl(url);
+  };
+  
+  useEffect(() => {
+    if (isRunning) {
+      localStorage.setItem('isRunning', 'true');
+      localStorage.setItem('startTime', startTime !== null ? startTime.toString() : 'default value');
+      localStorage.setItem('jobCode', selectedJobCode || '');
+      localStorage.setItem('taskUrl', taskUrl || '');
+    }
+  }, [isRunning, startTime, selectedJobCode, taskUrl]);
 
   const handleStart = () => {
     const start = Date.now();
@@ -89,16 +117,17 @@ const Page = () => {
 
   const handleStop = async () => {
     const storedStartTime = localStorage.getItem('startTime');
-    if (storedStartTime !== null) {
+    const storedJobCode = localStorage.getItem('jobCode');
+    const storedTaskUrl = localStorage.getItem('taskUrl');
+
+    console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl });
+  
+    if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
       const duration = Date.now() - Number(storedStartTime);
-      if (!selectedJobCode) {
-        // selectedJobCode is undefined or empty, return early
-        return;
-      }
-      await sendDataToGoogleSheets(selectedJobCode, duration, taskUrl);
+      await sendDataToGoogleSheets(storedJobCode, duration, storedTaskUrl);
       setFetchTrigger(fetchTrigger + 1);
       setIsRunning(false);
-      setSelectedJobCode(undefined); 
+      setSelectedJobCode(''); 
       setTaskUrl('');
       localStorage.removeItem('isRunning');
       localStorage.removeItem('startTime');

@@ -1,3 +1,4 @@
+// File: pages/api/resume.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 const { google } = require('googleapis');
 
@@ -35,32 +36,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       for (let i = 0; i < rows.length; i++) {
         const [storedJobCode, , storedTaskUrl] = rows[i];
-        console.log('storedJobCode:', storedJobCode);
-        console.log('storedTaskUrl:', storedTaskUrl);
-        console.log('jobCode:', jobCode);
-        console.log('taskUrl:', taskUrl);
 
         if (storedJobCode === jobCode && storedTaskUrl === taskUrl) {
-
           rowIndex = i;
           break;
         }
       }
-      console.log('Rowindex:', rowIndex);
+
       if (rowIndex === -1) {
-        // If no matching row was found, append a new row
-        await sheets.spreadsheets.values.append({
-          spreadsheetId: documentId,
-          range,
-          valueInputOption: 'RAW',
-          insertDataOption: 'INSERT_ROWS',
-          resource: {
-            values: [[jobCode, duration, taskUrl]],
-          },
-        });
+        // If no matching row was found, return an error
+        res.status(400).json({ message: 'Task not found' });
       } else {
         // If a matching row was found, update the duration in that row
-        console.log("a match was found");
         const existingDuration = Number(rows[rowIndex][1]);
         const totalDuration = existingDuration + duration;
         await sheets.spreadsheets.values.update({
@@ -71,12 +58,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             values: [[totalDuration]],
           },
         });
-      }
 
-      res.status(200).json({ message: 'Data sent to Google Sheets successfully' });
+        res.status(200).json({ message: 'Task resumed successfully' });
+      }
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Failed to send data to Google Sheets' });
+      res.status(500).json({ message: 'Failed to resume task' });
     }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
