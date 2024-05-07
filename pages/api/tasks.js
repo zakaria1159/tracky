@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         const googleSheets = google.sheets({ version: "v4", auth: client });
 
         const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-        const range = "Sheet2!A1:C100"; // Replace with your sheet name and the range of cells you want to read
+        const range = "Sheet2!A1:D100"; // Replace with your sheet name and the range of cells you want to read
 
         const response = await googleSheets.spreadsheets.values.get({
             spreadsheetId,
@@ -25,10 +25,11 @@ export default async function handler(req, res) {
         const data = response.data.values;
 
         const jobCodes = data.map(row => row[0]);
-        const durations = data.map(row => row[1]);
-        const taskUrls = data.map(row => row[2]);
+        const taskUrls = data.map(row => row[1]);
+        const durations = data.map(row => row[2]);
+        const date = data.map(row => row[3]);
 
-        res.status(200).json({ jobCodes, durations, taskUrls });
+        res.status(200).json({ jobCodes, taskUrls,durations, date });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

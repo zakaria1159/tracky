@@ -9,6 +9,8 @@ interface Task {
   jobCode: string | null;
   taskUrl: string | null;
   duration: number | null;
+  date: string | null;
+
 }
 
 const Page = () => {
@@ -18,18 +20,20 @@ const Page = () => {
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [taskToResume, setTaskToResume] = useState<Task | null>(null);
+  const [date, setDate] = useState<string>(new Date().toLocaleDateString('en-GB'));
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const [startTime, setStartTime] = useState<number | null>(null);
-  const sendDataToGoogleSheets = async (jobCode: string | null, duration: number | null, taskUrl: string | null) => {
+  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null,date: string | null) => {
     //     if (jobCode && duration) {
-      console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl });
+    console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date });
     try {
       const response = await fetch('/api/sendtosheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ jobCode, taskUrl, duration }),
+        body: JSON.stringify({ jobCode, taskUrl, duration, date }),
       });
 
       if (!response.ok) {
@@ -75,6 +79,11 @@ const Page = () => {
       },
     },
     {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+    },
+    {
       title: 'Action',
       key: 'action',
       render: (text: string, record: Task) => (
@@ -93,16 +102,18 @@ const Page = () => {
     setStartTime(start);
     setSelectedJobCode(jobCode);
     setTaskUrl(url);
+    setDate(new Date().toLocaleDateString('en-GB'));
   };
-  
+
   useEffect(() => {
     if (isRunning) {
       localStorage.setItem('isRunning', 'true');
       localStorage.setItem('startTime', startTime !== null ? startTime.toString() : 'default value');
       localStorage.setItem('jobCode', selectedJobCode || '');
       localStorage.setItem('taskUrl', taskUrl || '');
+      localStorage.setItem('date', date);
     }
-  }, [isRunning, startTime, selectedJobCode, taskUrl]);
+  }, [isRunning, startTime, selectedJobCode, taskUrl, date]);
 
   const handleStart = () => {
     const start = Date.now();
@@ -112,6 +123,7 @@ const Page = () => {
     localStorage.setItem('startTime', start.toString());
     localStorage.setItem('jobCode', selectedJobCode || '');
     localStorage.setItem('taskUrl', taskUrl || '');
+    setDate(new Date().toLocaleDateString('en-GB'));
   };
 
 
@@ -119,20 +131,22 @@ const Page = () => {
     const storedStartTime = localStorage.getItem('startTime');
     const storedJobCode = localStorage.getItem('jobCode');
     const storedTaskUrl = localStorage.getItem('taskUrl');
+    const storedDate = localStorage.getItem('date');
 
     console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl });
-  
+
     if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
       const duration = Date.now() - Number(storedStartTime);
-      await sendDataToGoogleSheets(storedJobCode, duration, storedTaskUrl);
+      await sendDataToGoogleSheets(storedJobCode,  storedTaskUrl, duration, storedDate);
       setFetchTrigger(fetchTrigger + 1);
       setIsRunning(false);
-      setSelectedJobCode(''); 
+      setSelectedJobCode('');
       setTaskUrl('');
       localStorage.removeItem('isRunning');
       localStorage.removeItem('startTime');
       localStorage.removeItem('jobCode');
       localStorage.removeItem('taskUrl');
+      localStorage.removeItem('date');
     }
   };
 
@@ -141,26 +155,26 @@ const Page = () => {
     const storedStartTime = localStorage.getItem('startTime');
     const storedJobCode = localStorage.getItem('jobCode');
     const storedTaskUrl = localStorage.getItem('taskUrl');
-  
+
     if (storedIsRunning) {
       setIsRunning(true);
     }
-  
+
     if (storedStartTime) {
       setStartTime(Number(storedStartTime));
     }
-  
+
     if (storedJobCode) {
       setSelectedJobCode(storedJobCode);
     }
-  
+
     if (storedTaskUrl) {
       setTaskUrl(storedTaskUrl);
     }
   }, []);
 
   useEffect(() => {
-    
+
     // Simulate a loading delay
     setTimeout(() => {
       setIsLoading(false); // Set isLoading to false after the components have loaded
@@ -191,7 +205,7 @@ const Page = () => {
                 </Select>
               )}
             </JobCodeFetcher>
-            <Input placeholder="Task URL" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning}/>
+            <Input placeholder="Task URL" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
             <Button type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
             <Button danger type="primary" onClick={handleStop} disabled={!isRunning}>Stop</Button>
           </Card>
@@ -200,7 +214,7 @@ const Page = () => {
           <Card title="Dashboard" style={{ minHeight: '300px' }}>
             <h2>Tasks</h2>
             <div>
-              <TaskFetcher trigger={fetchTrigger}>
+            <TaskFetcher trigger={fetchTrigger}>
                 {(tasks, isLoading) => (
                   isLoading ? (
                     <Skeleton active />
