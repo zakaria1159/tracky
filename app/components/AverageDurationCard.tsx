@@ -29,7 +29,7 @@ const AverageDurationCard: React.FC<AverageDurationCardProps> = ({ tasks }) => {
 
 
   return (
-    <Card title="Average Duration" style={{ textAlign: 'center', fontSize: '24px' }}>
+    <Card title="Average Duration" style={{ textAlign: 'center', fontSize: '24px' , width: '100%'}}>
        {isNaN(averageDurationSeconds) ? 'No tasks yet' : `${minutesStr}:${secondsStr}`}
     </Card>
   );

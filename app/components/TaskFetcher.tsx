@@ -8,6 +8,7 @@ interface Task {
     taskUrl: string;
     duration: number | null;
     date: string | null;
+    taskType: string | null;
 }
 
 interface TaskFetcherProps {
@@ -29,9 +30,10 @@ const TaskFetcher: React.FC<TaskFetcherProps> = ({ children, trigger }) => {
                 jobCode: jobCode,
                 taskUrl: data.taskUrls[index],
                 duration: Number(data.durations[index]),
-                date: data.date[index]
+                date: data.date[index],
+                taskType : data.taskType[index],
             }));
-
+            
             setTasks(tasks);
             setIsLoading(false);
         };
