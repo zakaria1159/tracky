@@ -10,10 +10,10 @@ interface Task {
 }
 
 interface JobCodeChartProps {
-  tasks: Task[];
-  width?: number;
-  height?: number;
-  showLabels?: boolean;
+    tasks: Task[];
+    width?: number;
+    height?: number;
+    showLabels?: boolean;
 }
 interface CustomLabelProps {
     x: number;
@@ -21,25 +21,46 @@ interface CustomLabelProps {
     fill: string;
     value: number;
     name: string;
-  }
+}
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+
+const COLORS = ['#003f5c', '#2f4b7c', '#665191', '#a05195', '#d45087', '#f95d6a', '#ff7c43', '#ffa600', '#00876c', '#66a182', '#a6ba73', '#dacc67', '#ffdd59', '#ffbc51', '#ff9a42', '#ff774c', '#ff5059'];
+/*
 const CustomLabel : React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) => (
-    <text x={x} y={y} fill={fill} fontSize={12} textAnchor="middle" dominantBaseline="central">
-      {`${name}: ${value}`}
+    <text x={x} y={y} fill={fill} textAnchor="middle" dominantBaseline="central">
+      <tspan fontSize={12}>{`${name}: `}</tspan>
+      <tspan fontSize={16} fontWeight="bold">{value}</tspan>
     </text>
-  );
+);
+*/
 
-const JobCodeChart: React.FC<JobCodeChartProps> = ({ tasks, width = 160, height = 160, showLabels = false}) => {
+
+
+
+
+
+const JobCodeChart: React.FC<JobCodeChartProps> = ({ tasks, width = 160, height = 160, showLabels = false }) => {
     const jobCodeCounts = tasks.reduce((counts: { [key: string]: number }, task) => {
-    if (task.jobCode) {
-        counts[task.jobCode] = (counts[task.jobCode] || 0) + 1;
-    }
-    return counts;
-}, {});
+        if (task.jobCode) {
+            counts[task.jobCode] = (counts[task.jobCode] || 0) + 1;
+        }
+        return counts;
+    }, {});
 
     const data = Object.entries(jobCodeCounts).map(([jobCode, count]) => ({ name: jobCode, value: count }));
-    
+    const totalCount = Object.values(jobCodeCounts).reduce((total, count) => total + count, 0);
+
+    const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) => {
+        const percent = (value / totalCount) * 100;
+
+        return (
+            <text x={x} y={y} fill={fill} textAnchor="middle" dominantBaseline="central">
+                <tspan fontSize={12}>{name}</tspan>
+                <tspan fontSize={16} fontWeight="bold" x={x} dy="1.2em">{`${percent.toFixed(0)}%`}</tspan>
+            </text>
+        );
+    };
 
     return (
         <PieChart width={width} height={height}>
@@ -47,8 +68,9 @@ const JobCodeChart: React.FC<JobCodeChartProps> = ({ tasks, width = 160, height 
                 dataKey="value"
                 isAnimationActive={false}
                 data={data}
-                cx="50%"
+                cx="50%"  
                 cy="50%"
+                labelLine={false}
                 outerRadius="80%"
                 fill="#8884d8"
                 label={showLabels ? CustomLabel : undefined}

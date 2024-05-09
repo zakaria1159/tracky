@@ -8,6 +8,7 @@ import AverageDurationCard from './components/AverageDurationCard';
 import JobCodeChart from './components/JobCodeChart';
 import { SearchOutlined } from '@ant-design/icons';
 import TaskTypeFetcher from './components/TaskTypeFetcher';
+import TaskTypeChart from './components/TaskTypeChart';
 
 
 interface Task {
@@ -302,7 +303,7 @@ const Page = () => {
                       </Col>
                       <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
                         <Card
-                          title="Tasks per JobCode"
+                          title="Tasks per Types"
                           style={{ width: '100%' }}
                           extra={
                             <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsModalVisible(true)}>
@@ -311,7 +312,7 @@ const Page = () => {
                           }
                         >
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                          <JobCodeChart tasks={tasks} />
+                          <TaskTypeChart tasks={tasks} />
                           </div>
                           <Modal
                             title="Job Code Chart"
@@ -321,7 +322,7 @@ const Page = () => {
                             width={720}
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <JobCodeChart tasks={tasks} width={400} height={400} showLabels={true} />
+                              <TaskTypeChart tasks={tasks} width={550} height={450} showLabels={true} />
                             </div>
                           </Modal>
                         </Card>
@@ -331,9 +332,11 @@ const Page = () => {
                     {isLoading ? (
                       <Skeleton active />
                     ) : (
-                      <Col xs={24} sm={24} md={12} lg={24} xl={24}>
-                        <Table key={fetchTrigger} dataSource={tasks} columns={columns} size="small" pagination={{ pageSize: 6 }} />
+                      <Row>
+                      <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                        <Table key={fetchTrigger} dataSource={tasks} columns={columns} size="small" pagination={{ pageSize: 6 }} style={{ fontSize: '0.8em' }}  scroll={{ x: 'max-content' }} />
                       </Col>
+                      </Row>
                     )}
                   </>
                 )}
