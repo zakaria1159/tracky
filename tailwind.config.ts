@@ -15,6 +15,11 @@ const config: Config = {
       },
     },
   },
+  variants: {
+    extend: {
+      fontSize: ['important']
+    }
+  },    
   plugins: [],
 };
 export default config;

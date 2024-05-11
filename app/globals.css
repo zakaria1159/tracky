@@ -26,3 +26,8 @@ body {
     text-wrap: balance;
   }
 }
+
+.css-dev-only-do-not-override-1okl62o .ant-table-wrapper .ant-table .task-url {
+  font-size: 5px !important;
+}
+

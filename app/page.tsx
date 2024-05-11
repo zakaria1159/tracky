@@ -1,14 +1,16 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import JobCodeFetcher from './components/JobCodeFetcher';
 import TaskFetcher from './components/TaskFetcher';
 
-import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin, Modal } from 'antd';
+import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin, Modal, Space, InputRef, TableColumnsType, TableColumnType } from 'antd';
 import AverageDurationCard from './components/AverageDurationCard';
 import JobCodeChart from './components/JobCodeChart';
 import { SearchOutlined } from '@ant-design/icons';
 import TaskTypeFetcher from './components/TaskTypeFetcher';
 import TaskTypeChart from './components/TaskTypeChart';
+import Highlighter from "react-highlight-words";
+
 
 
 interface Task {
@@ -20,6 +22,16 @@ interface Task {
   taskType: string | null;
 
 }
+
+type DataIndex = keyof Task;
+
+interface FilterDropdownProps {
+  setSelectedKeys: (keys: any[]) => void;
+  selectedKeys: any[];
+  confirm: () => void;
+  clearFilters?: () => void; // Make clearFilters optional
+}
+
 
 const Page = () => {
   const [selectedJobCode, setSelectedJobCode] = useState<string | null | undefined>(null);
@@ -33,6 +45,109 @@ const Page = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState<string | null | undefined>(null);
   const [isTaskTypeModalVisible, setIsTaskTypeModalVisible] = useState(false);
+  const [sortedInfo, setSortedInfo] = React.useState<{ order?: 'descend' | 'ascend', columnKey?: string }>({});
+
+
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
+
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: FilterDropdownProps['confirm'],
+    dataIndex: DataIndex,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+
+  };
+
+  const getColumnSearchProps = (dataIndex: DataIndex): TableColumnType<Task> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+
+          <Button
+            type="link"
+            size="small"
+            onClick={() => {
+              close();
+            }}
+          >
+            close
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      let recordValue = record[dataIndex!];
+      if (recordValue === null || record[dataIndex] === null) {
+        return false; // or whatever you want to do when dataIndex or record[dataIndex] is null
+      }
+
+      return recordValue
+        .toString()
+        .toLowerCase()
+        .includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+
+
+
+
+  const handleChange = (pagination: any, filters: any, sorter: any) => {
+    setSortedInfo(sorter);
+  };
 
   const [startTime, setStartTime] = useState<number | null>(null);
   const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null) => {
@@ -56,34 +171,45 @@ const Page = () => {
       console.error(error);
     }
   }
+
   const columns = [
     {
       title: 'Job Code',
       dataIndex: 'jobCode',
       key: 'jobCode',
+      width: '5%',
+
+      ...getColumnSearchProps('jobCode'),
     },
     {
       title: 'Type',
       dataIndex: 'taskType',
       key: 'tasktType',
+
     },
     {
       title: 'Task URL',
       dataIndex: 'taskUrl',
       key: 'taskUrl',
-      width: '30%', // Set the width of the Task URL column to 30%
+      width: '20%',
+      ...getColumnSearchProps('taskUrl'),
       render: (text: string | null) => (
         <Tooltip title={text}>
-          <a href={text || ''}>
-            {text && text.length > 20 ? text.substring(0, 20) + '...' : text}
+          <a href={text || ''} style={{ fontSize: '12px' }}>
+            {text && text.length > 25 ? text.substring(28, 42) + '...' : text}
           </a>
         </Tooltip>
       ),
+     
     },
     {
       title: 'Duration',
       dataIndex: 'duration',
       key: 'duration',
+
+      sorter: (a: any, b: any) => a.duration - b.duration,
+      sortOrder: sortedInfo.columnKey === 'duration' ? sortedInfo.order : null,
+
       render: (duration: number | null) => {
         if (duration === null) {
           return null;
@@ -98,10 +224,14 @@ const Page = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      sorter: (a: any, b: any) => a.date - b.date,
+      sortOrder: sortedInfo.columnKey === 'date' ? sortedInfo.order : null,
+
     },
     {
       title: 'Action',
       key: 'action',
+
       render: (text: string, record: Task) => (
         <Button onClick={() => {
           if (record.jobCode && record.taskUrl) {
@@ -208,8 +338,9 @@ const Page = () => {
     }, 2000); // Change this to your actual loading time
   }, []);
 
+
   return (
-    
+
     isLoading ? (
       <Skeleton active /> // Display the Skeleton component when isLoading is true
     ) : (
@@ -286,7 +417,7 @@ const Page = () => {
                           }
                         >
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                          <JobCodeChart tasks={tasks}  fontSize={5}/>
+                            <JobCodeChart tasks={tasks} fontSize={5} />
                           </div>
                           <Modal
                             title="Job Code Chart"
@@ -296,11 +427,11 @@ const Page = () => {
                             width={720}
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <JobCodeChart tasks={tasks} width={400} height={400} fontSize={12}/>
+                              <JobCodeChart tasks={tasks} width={400} height={400} fontSize={12} />
                             </div>
                           </Modal>
                         </Card>
-                        
+
                       </Col>
                       <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
                         <Card
@@ -313,7 +444,7 @@ const Page = () => {
                           }
                         >
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                          <TaskTypeChart tasks={tasks} />
+                            <TaskTypeChart tasks={tasks} />
                           </div>
                           <Modal
                             title="Task per types"
@@ -327,16 +458,24 @@ const Page = () => {
                             </div>
                           </Modal>
                         </Card>
-                        
+
                       </Col>
                     </Row>
                     {isLoading ? (
                       <Skeleton active />
                     ) : (
                       <Row>
-                      <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-                        <Table key={fetchTrigger} dataSource={tasks} columns={columns} size="small" pagination={{ pageSize: 6 }} style={{ fontSize: '0.8em' }}  scroll={{ x: 'max-content' }} />
-                      </Col>
+                        <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                          <Space
+                            style={{
+                              marginBottom: 16,
+                            }}
+                          >
+
+
+                          </Space>
+                          <Table key={fetchTrigger} dataSource={tasks} onChange={handleChange} columns={columns} size="small" pagination={{ pageSize: 6 }} style={{ fontSize: '0.8em' }} scroll={{ x: 'max-content' }} />
+                        </Col>
                       </Row>
                     )}
                   </>
