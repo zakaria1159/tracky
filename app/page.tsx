@@ -32,6 +32,7 @@ const Page = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState<string | null | undefined>(null);
+  const [isTaskTypeModalVisible, setIsTaskTypeModalVisible] = useState(false);
 
   const [startTime, setStartTime] = useState<number | null>(null);
   const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null) => {
@@ -285,7 +286,7 @@ const Page = () => {
                           }
                         >
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                          <JobCodeChart tasks={tasks} />
+                          <JobCodeChart tasks={tasks}  fontSize={5}/>
                           </div>
                           <Modal
                             title="Job Code Chart"
@@ -295,7 +296,7 @@ const Page = () => {
                             width={720}
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <JobCodeChart tasks={tasks} width={400} height={400} showLabels={true} />
+                              <JobCodeChart tasks={tasks} width={400} height={400} fontSize={12}/>
                             </div>
                           </Modal>
                         </Card>
@@ -306,7 +307,7 @@ const Page = () => {
                           title="Tasks per Types"
                           style={{ width: '100%' }}
                           extra={
-                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsModalVisible(true)}>
+                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskTypeModalVisible(true)}>
 
                             </Button>
                           }
@@ -315,10 +316,10 @@ const Page = () => {
                           <TaskTypeChart tasks={tasks} />
                           </div>
                           <Modal
-                            title="Job Code Chart"
-                            visible={isModalVisible}
-                            onOk={() => setIsModalVisible(false)}
-                            onCancel={() => setIsModalVisible(false)}
+                            title="Task per types"
+                            visible={isTaskTypeModalVisible}
+                            onOk={() => setIsTaskTypeModalVisible(false)}
+                            onCancel={() => setIsTaskTypeModalVisible(false)}
                             width={720}
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>

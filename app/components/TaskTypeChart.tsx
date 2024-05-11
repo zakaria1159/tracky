@@ -50,7 +50,7 @@ const TaskTypeChart: React.FC<TaskTypeChartProps> = ({ tasks, width = 160, heigh
                 data={data}
                 cx="50%"
                 cy="50%"
-                outerRadius="80%"
+                outerRadius="90%"
                 fill="#8884d8"
                 label={showLabels ? CustomLabel : undefined}
             >
