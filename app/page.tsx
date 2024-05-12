@@ -11,12 +11,6 @@ import TaskTypeFetcher from './components/TaskTypeFetcher';
 import TaskTypeChart from './components/TaskTypeChart';
 import Highlighter from "react-highlight-words";
 import TaskStatusChart from './components/TaskStatusChart';
-<<<<<<< HEAD
-=======
-
-
->>>>>>> dev
-
 
 
 interface Task {
@@ -27,14 +21,7 @@ interface Task {
   date: string | null;
   taskType: string | null;
   taskStatus: string | null;
-<<<<<<< Updated upstream
 
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
->>>>>>> Stashed changes
 }
 
 type DataIndex = keyof Task;
@@ -246,27 +233,11 @@ const Page = () => {
     {
       title: 'Status',
       dataIndex: 'taskStatus',
-<<<<<<< Updated upstream
       key: 'taskStatus',
 
     },
     {
       title: 'Action',
-=======
-<<<<<<< HEAD
-      key: 'tasktStatus',
-
-    },
-    {
-      title: 'Actions',
-=======
-      key: 'taskStatus',
-
-    },
-    {
-      title: 'Action',
->>>>>>> dev
->>>>>>> Stashed changes
       key: 'action',
 
       render: (text: string, record: Task) => (
