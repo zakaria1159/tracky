@@ -10,6 +10,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import TaskTypeFetcher from './components/TaskTypeFetcher';
 import TaskTypeChart from './components/TaskTypeChart';
 import Highlighter from "react-highlight-words";
+import TaskStatusChart from './components/TaskStatusChart';
 
 
 
@@ -20,6 +21,7 @@ interface Task {
   duration: number | null;
   date: string | null;
   taskType: string | null;
+  taskStatus: string | null;
 
 }
 
@@ -45,6 +47,7 @@ const Page = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState<string | null | undefined>(null);
   const [isTaskTypeModalVisible, setIsTaskTypeModalVisible] = useState(false);
+  const [isTaskStatusModalVisible, setIsTaskStatusModalVisible] = useState(false);
   const [sortedInfo, setSortedInfo] = React.useState<{ order?: 'descend' | 'ascend', columnKey?: string }>({});
 
 
@@ -150,7 +153,7 @@ const Page = () => {
   };
 
   const [startTime, setStartTime] = useState<number | null>(null);
-  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null) => {
+  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null)  => {
     //     if (jobCode && duration) {
     console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date, taskType });
     try {
@@ -229,6 +232,12 @@ const Page = () => {
 
     },
     {
+      title: 'Status',
+      dataIndex: 'taskStatus',
+      key: 'taskStatus',
+
+    },
+    {
       title: 'Action',
       key: 'action',
 
@@ -282,6 +291,7 @@ const Page = () => {
     const storedTaskUrl = localStorage.getItem('taskUrl');
     const storedDate = localStorage.getItem('date');
     const storedTaskType = localStorage.getItem('taskType');
+  //  const storedTaskStatus = localStorage.getItem('taskStatus');
 
     console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl });
 
@@ -455,6 +465,33 @@ const Page = () => {
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                               <TaskTypeChart tasks={tasks} width={550} height={450} showLabels={true} />
+                            </div>
+                          </Modal>
+                        </Card>
+
+                      </Col>
+                      <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
+                        <Card
+                          title="Tasks per Status"
+                          style={{ width: '100%' }}
+                          extra={
+                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskStatusModalVisible(true)}>
+
+                            </Button>
+                          }
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <TaskStatusChart tasks={tasks} />
+                          </div>
+                          <Modal
+                            title="Task per Status"
+                            visible={isTaskStatusModalVisible}
+                            onOk={() => setIsTaskStatusModalVisible(false)}
+                            onCancel={() => setIsTaskStatusModalVisible(false)}
+                            width={720}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                              <TaskStatusChart tasks={tasks} width={550} height={450} showLabels={true} />
                             </div>
                           </Modal>
                         </Card>

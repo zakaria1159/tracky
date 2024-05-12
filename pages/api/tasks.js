@@ -15,22 +15,26 @@ export default async function handler(req, res) {
         const googleSheets = google.sheets({ version: "v4", auth: client });
 
         const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-        const range = "Sheet2!A1:E100"; // Replace with your sheet name and the range of cells you want to read
+        const range = "Sheet2!A1:F100"; // Replace with your sheet name and the range of cells you want to read
 
         const response = await googleSheets.spreadsheets.values.get({
             spreadsheetId,
             range,
         });
 
-        const data = response.data.values;
-
+        const data = response.data.values.filter(row => row[0]);
+        
         const jobCodes = data.map(row => row[0]);
         const taskUrls = data.map(row => row[1]);
         const durations = data.map(row => row[2]);
         const date = data.map(row => row[3]);
         const taskType = data.map(row => row[4]);
+        const taskStatus = data.map(row => row[5]);
 
-        res.status(200).json({ jobCodes, taskUrls,durations, date, taskType });
+    
+        res.status(200).json({ jobCodes, taskUrls,durations, date, taskType, taskStatus });   
+        
+    //    res.status(200).json({ jobCodes, taskUrls,durations, date, taskType, taskStatus });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -13,7 +13,7 @@ const range = 'Sheet2'; // Update with your Sheet name
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { jobCode, taskUrl, duration, date, taskType } = req.body;
+    const { jobCode, taskUrl, duration, date, taskType, taskStatus } = req.body;
 
     try {
       const auth = new google.auth.JWT(
@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           valueInputOption: 'RAW',
           insertDataOption: 'INSERT_ROWS',
           resource: {
-            values: [[jobCode, taskUrl, duration, date, taskType ]],
+            values: [[jobCode, taskUrl, duration, date, taskType, taskStatus ]],
           },
         });
       } else {
