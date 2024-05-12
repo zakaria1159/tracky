@@ -33,7 +33,15 @@ const TaskFetcher: React.FC<TaskFetcherProps> = ({ children, trigger }) => {
                 duration: Number(data.durations[index]),
                 date: data.date[index],
                 taskType : data.taskType[index],
+<<<<<<< Updated upstream
                 taskStatus : data.taskStatus[index]
+=======
+<<<<<<< HEAD
+                taskStatus: data.taskStatus[index]
+=======
+                taskStatus : data.taskStatus[index]
+>>>>>>> dev
+>>>>>>> Stashed changes
             }));
             
             setTasks(tasks);

@@ -31,10 +31,20 @@ export default async function handler(req, res) {
         const taskType = data.map(row => row[4]);
         const taskStatus = data.map(row => row[5]);
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+        res.status(200).json({ jobCodes, taskUrls,durations, date, taskType, taskStatus });
+=======
+>>>>>>> Stashed changes
     
         res.status(200).json({ jobCodes, taskUrls,durations, date, taskType, taskStatus });   
         
     //    res.status(200).json({ jobCodes, taskUrls,durations, date, taskType, taskStatus });
+<<<<<<< Updated upstream
+=======
+>>>>>>> dev
+>>>>>>> Stashed changes
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
