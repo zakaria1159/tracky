@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import JobCodeFetcher from './components/JobCodeFetcher';
 import TaskFetcher from './components/TaskFetcher';
+import { z } from 'zod';
 
 import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin, Modal, Space, InputRef, TableColumnsType, TableColumnType } from 'antd';
 import AverageDurationCard from './components/AverageDurationCard';
@@ -21,6 +22,7 @@ interface Task {
   date: string | null;
   taskType: string | null;
   taskStatus: string | null;
+  taskStatusPath: string | null;
 
 }
 
@@ -33,10 +35,17 @@ interface FilterDropdownProps {
   clearFilters?: () => void; // Make clearFilters optional
 }
 
+const schema = z.object({
+  selectedJobCode: z.string().nonempty(),
+  taskUrl: z.string().url(),
+  selectedTaskType: z.string().nonempty(),
+  // add more fields as needed
+});
 
 const Page = () => {
   const [selectedJobCode, setSelectedJobCode] = useState<string | null | undefined>(null);
   const [taskUrl, setTaskUrl] = useState<string | null>(null);
+  const [taskStatus, setTaskStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -152,16 +161,16 @@ const Page = () => {
   };
 
   const [startTime, setStartTime] = useState<number | null>(null);
-  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null)  => {
+  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null, taskStatus: string | null)  => {
     //     if (jobCode && duration) {
-    console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date, taskType });
+    console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date, taskType, taskStatus });
     try {
       const response = await fetch('/api/sendtosheets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ jobCode, taskUrl, duration, date, taskType }),
+        body: JSON.stringify({ jobCode, taskUrl, duration, date, taskType, taskStatus }),
       });
 
       if (!response.ok) {
@@ -258,6 +267,8 @@ const Page = () => {
     setTaskUrl(url);
     setDate(new Date().toLocaleDateString('en-GB'));
     setSelectedTaskType(taskType);
+    setTaskStatus('In Review');
+    
   };
 
   useEffect(() => {
@@ -268,19 +279,36 @@ const Page = () => {
       localStorage.setItem('taskUrl', taskUrl || '');
       localStorage.setItem('date', date);
       localStorage.setItem('taskType', selectedTaskType || '');
+      localStorage.setItem('taskStatus', 'In Review');
     }
-  }, [isRunning, startTime, selectedJobCode, taskUrl, date, selectedTaskType]);
+  }, [isRunning, startTime, selectedJobCode, taskUrl, date, selectedTaskType, taskStatus]);
 
   const handleStart = () => {
-    const start = Date.now();
-    setStartTime(start);
-    setIsRunning(true);
-    localStorage.setItem('isRunning', 'true');
-    localStorage.setItem('startTime', start.toString());
-    localStorage.setItem('jobCode', selectedJobCode || '');
-    localStorage.setItem('taskUrl', taskUrl || '');
-    setDate(new Date().toLocaleDateString('en-GB'));
-    localStorage.setItem('taskType', selectedTaskType || '');
+    const data = {
+      selectedJobCode,
+      taskUrl,
+      selectedTaskType,
+      // add more fields as needed
+    };
+    try {
+      schema.parse(data);
+
+      const start = Date.now();
+      setStartTime(start);
+      setIsRunning(true);
+      localStorage.setItem('isRunning', 'true');
+      localStorage.setItem('startTime', start.toString());
+      localStorage.setItem('jobCode', selectedJobCode || '');
+      localStorage.setItem('taskUrl', taskUrl || '');
+      localStorage.setItem('taskStatus', 'In Review');
+      setDate(new Date().toLocaleDateString('en-GB'));
+      localStorage.setItem('taskType', selectedTaskType || '');
+
+
+    } catch (error) {
+      alert('Please fill in all fields');
+    }
+ 
   };
 
 
@@ -290,13 +318,14 @@ const Page = () => {
     const storedTaskUrl = localStorage.getItem('taskUrl');
     const storedDate = localStorage.getItem('date');
     const storedTaskType = localStorage.getItem('taskType');
-  //  const storedTaskStatus = localStorage.getItem('taskStatus');
+    const storedTaskStatus = localStorage.getItem('taskStatus');
 
-    console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl });
+
+    console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl, storedTaskStatus });
 
     if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
       const duration = Date.now() - Number(storedStartTime);
-      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType);
+      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType, storedTaskStatus);
       setFetchTrigger(fetchTrigger + 1);
       setIsRunning(false);
       setSelectedJobCode('');
@@ -521,6 +550,7 @@ const Page = () => {
           </Card>
         </Col>
       </Row>
+      
     )
   );
 };

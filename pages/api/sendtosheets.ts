@@ -41,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('storedTaskUrl:', storedTaskUrl);
         console.log('jobCode:', jobCode);
         console.log('taskUrl:', taskUrl);
+        console.log('taskUrl:', taskStatus);
 
         if (storedJobCode === jobCode && storedTaskUrl === taskUrl) {
 
@@ -57,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           valueInputOption: 'RAW',
           insertDataOption: 'INSERT_ROWS',
           resource: {
-            values: [[jobCode, taskUrl, duration, date, taskType, taskStatus ]],
+            values: [[jobCode, taskUrl, duration, date, taskType, taskStatus]],
           },
         });
       } else {
@@ -81,6 +82,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           valueInputOption: 'USER_ENTERED',
           resource: {
             values: [[currentDate]],
+          },
+        });
+        const cellResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: documentId,
+          range: `${range}!F${rowIndex + 1}`,
+        });
+        let currentStatus = '';
+        if (cellResponse.data.values && cellResponse.data.values.length > 0) {
+          currentStatus = cellResponse.data.values[0][0];
+        }
+        const updatedStatus = currentStatus ? `${currentStatus};${taskStatus}` : taskStatus;
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: documentId,
+          range: `${range}!F${rowIndex + 1}`,
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: [[updatedStatus]],
           },
         });
       }

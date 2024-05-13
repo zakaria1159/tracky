@@ -10,6 +10,7 @@ interface Task {
     date: string | null;
     taskType: string | null;
     taskStatus: string | null;
+    taskStatusPath: string | null;
 }
 
 interface TaskFetcherProps {
@@ -33,8 +34,11 @@ const TaskFetcher: React.FC<TaskFetcherProps> = ({ children, trigger }) => {
                 duration: Number(data.durations[index]),
                 date: data.date[index],
                 taskType : data.taskType[index],
-                taskStatus : data.taskStatus[index]
+                taskStatus : data.taskStatus[index] ? data.taskStatus[index].split(";").pop() : null,
+                taskStatusPath: data.taskStatus[index],
+                
             }));
+        //    console.log('taskStatus:', tasks[0].taskStatus);
             
             setTasks(tasks);
             setIsLoading(false);
