@@ -12,6 +12,8 @@ import TaskTypeFetcher from './components/TaskTypeFetcher';
 import TaskTypeChart from './components/TaskTypeChart';
 import Highlighter from "react-highlight-words";
 import TaskStatusChart from './components/TaskStatusChart';
+import moment from 'moment';
+
 
 
 interface Task {
@@ -57,11 +59,31 @@ const Page = () => {
   const [isTaskTypeModalVisible, setIsTaskTypeModalVisible] = useState(false);
   const [isTaskStatusModalVisible, setIsTaskStatusModalVisible] = useState(false);
   const [sortedInfo, setSortedInfo] = React.useState<{ order?: 'descend' | 'ascend', columnKey?: string }>({});
+  const [sortedTasks, setSortedTasks] = useState([...tasks]);
 
 
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
+
+
+
+  const clearForm = () => {
+    // Remove items from localStorage
+    localStorage.removeItem('isRunning');
+    localStorage.removeItem('startTime');
+    localStorage.removeItem('jobCode');
+    localStorage.removeItem('taskUrl');
+    localStorage.removeItem('date');
+    localStorage.removeItem('taskType');
+
+    // Set properties to null or empty
+    setIsRunning(false);
+    setStartTime(null);
+    setSelectedJobCode('');
+    setTaskUrl('');
+    setSelectedTaskType('');
+  }
 
   const handleSearch = (
     selectedKeys: string[],
@@ -153,15 +175,12 @@ const Page = () => {
   });
 
 
-
-
-
   const handleChange = (pagination: any, filters: any, sorter: any) => {
     setSortedInfo(sorter);
   };
 
   const [startTime, setStartTime] = useState<number | null>(null);
-  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null, taskStatus: string | null)  => {
+  const sendDataToGoogleSheets = async (jobCode: string | null, taskUrl: string | null, duration: number | null, date: string | null, taskType: string | null, taskStatus: string | null, updateDuration: boolean) => {
     //     if (jobCode && duration) {
     console.log('Sending data to Google Sheets:', { jobCode, duration, taskUrl, date, taskType, taskStatus });
     try {
@@ -170,7 +189,7 @@ const Page = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ jobCode, taskUrl, duration, date, taskType, taskStatus }),
+        body: JSON.stringify({ jobCode, taskUrl, duration, date, taskType, taskStatus, updateDuration }),
       });
 
       if (!response.ok) {
@@ -211,7 +230,7 @@ const Page = () => {
           </a>
         </Tooltip>
       ),
-     
+
     },
     {
       title: 'Duration',
@@ -235,10 +254,17 @@ const Page = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      sorter: (a: any, b: any) => a.date - b.date,
+      sorter: (a: any, b: any) => 
+        moment(a.date, "DD/MM/YY").valueOf() - moment(b.date, "DD/MM/YY").valueOf(),
       sortOrder: sortedInfo.columnKey === 'date' ? sortedInfo.order : null,
-
+      render: (date: string | null) => {
+        if (date === null) {
+          return null;
+        }
+        return moment(date, "DD/MM/YY").format("DD/MM/YY");
+      },
     },
+  
     {
       title: 'Status',
       dataIndex: 'taskStatus',
@@ -250,14 +276,47 @@ const Page = () => {
       key: 'action',
 
       render: (text: string, record: Task) => (
-        <Button onClick={() => {
-          if (record.jobCode && record.taskUrl) {
-            handleResume(record.jobCode, record.taskUrl, record.taskType || '');
-          }
-        }}>Resume</Button>
+        <>
+          <Button disabled={record.taskStatus === 'Approved'} onClick={() => {
+            if (record.jobCode && record.taskUrl) {
+              handleResume(record.jobCode, record.taskUrl, record.taskType || '');
+            }
+          }}>Resume</Button>
+          <Button onClick={() => {
+            if (record.jobCode && record.taskUrl) {
+              handleUpdateStatus(record.jobCode, record.taskUrl);
+            } else {
+              console.error('jobCode or taskUrl is null');
+            }
+          }}>Update Status</Button>
+        </>
       ),
     },
   ];
+
+ 
+
+  const handleUpdateStatus = (jobCode: string, url: string) => {
+    // Update the taskStatus
+    setTaskStatus('Approved');
+
+    // Update the taskStatus in localStorage
+    localStorage.setItem('jobCode', jobCode);
+    localStorage.setItem('taskUrl', url);
+    localStorage.setItem('taskStatus', 'Approved');
+
+
+    handleStop(false);
+    setFetchTrigger(fetchTrigger + 1);
+    clearForm();
+  }
+
+  useEffect(() => {
+    // This code will run when `taskStatus` changes
+    console.log('taskStatus has changed');
+  }, [taskStatus]);
+
+
 
   const handleResume = (jobCode: string, url: string, taskType: string) => {
     const start = Date.now();
@@ -268,7 +327,7 @@ const Page = () => {
     setDate(new Date().toLocaleDateString('en-GB'));
     setSelectedTaskType(taskType);
     setTaskStatus('In Review');
-    
+
   };
 
   useEffect(() => {
@@ -308,11 +367,13 @@ const Page = () => {
     } catch (error) {
       alert('Please fill in all fields');
     }
- 
+
   };
 
 
-  const handleStop = async () => {
+
+
+  const handleStop = async (updateDuration = true) => {
     const storedStartTime = localStorage.getItem('startTime');
     const storedJobCode = localStorage.getItem('jobCode');
     const storedTaskUrl = localStorage.getItem('taskUrl');
@@ -322,21 +383,17 @@ const Page = () => {
 
 
     console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl, storedTaskStatus });
+    if (storedTaskStatus === 'Approved') {
+      const duration = Date.now() - Number(storedStartTime);
+      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType, storedTaskStatus, updateDuration);
+    }
 
     if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
       const duration = Date.now() - Number(storedStartTime);
-      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType, storedTaskStatus);
+      await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType, storedTaskStatus, updateDuration);
       setFetchTrigger(fetchTrigger + 1);
       setIsRunning(false);
-      setSelectedJobCode('');
-      setTaskUrl('');
-      setSelectedTaskType('');
-      localStorage.removeItem('isRunning');
-      localStorage.removeItem('startTime');
-      localStorage.removeItem('jobCode');
-      localStorage.removeItem('taskUrl');
-      localStorage.removeItem('date');
-      localStorage.removeItem('taskType');
+      clearForm();
     }
   };
 
@@ -375,6 +432,11 @@ const Page = () => {
       setIsLoading(false); // Set isLoading to false after the components have loaded
     }, 2000); // Change this to your actual loading time
   }, []);
+
+
+
+
+
 
 
   return (
@@ -423,7 +485,7 @@ const Page = () => {
             <Input id="taskUrlInput" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
               <Button size="large" type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
-              <Button danger size="large" type="primary" onClick={handleStop} disabled={!isRunning}>Stop</Button>
+              <Button danger size="large" type="primary" onClick={() => handleStop(true)} disabled={!isRunning}>Stop</Button>
             </div>
             {isRunning && (
               <div className="mt-4 flex items-center justify-center">
@@ -465,7 +527,7 @@ const Page = () => {
                             width={720}
                           >
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <JobCodeChart tasks={tasks} width={400} height={400} fontSize={12} />
+                              <JobCodeChart tasks={tasks} width={500} height={450} fontSize={12} />
                             </div>
                           </Modal>
                         </Card>
@@ -539,7 +601,16 @@ const Page = () => {
 
 
                           </Space>
-                          <Table key={fetchTrigger} dataSource={tasks} onChange={handleChange} columns={columns} size="small" pagination={{ pageSize: 6 }} style={{ fontSize: '0.8em' }} scroll={{ x: 'max-content' }} />
+                          <Table
+                            key={fetchTrigger}
+                            dataSource={tasks}
+                            onChange={handleChange}
+                            columns={columns}
+                            size="small"
+                            pagination={{ pageSize: 6 }}
+                            style={{ fontSize: '0.8em' }}
+                            scroll={{ x: 'max-content' }}
+                          />
                         </Col>
                       </Row>
                     )}
@@ -550,7 +621,7 @@ const Page = () => {
           </Card>
         </Col>
       </Row>
-      
+
     )
   );
 };

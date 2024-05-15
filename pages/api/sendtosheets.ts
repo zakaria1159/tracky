@@ -13,7 +13,7 @@ const range = 'Sheet2'; // Update with your Sheet name
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { jobCode, taskUrl, duration, date, taskType, taskStatus } = req.body;
+    const { jobCode, taskUrl, duration, date, taskType, taskStatus, updateDuration } = req.body;
 
     try {
       const auth = new google.auth.JWT(
@@ -34,14 +34,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Find the row with the matching jobCode and taskUrl
       const rows = response.data.values || [];
       let rowIndex = -1;
+      let approved = false;
+
+      
 
       for (let i = 0; i < rows.length; i++) {
-        const [storedJobCode, storedTaskUrl, , storedDate, storedTaskType] = rows[i];
+        const [storedJobCode, storedTaskUrl, , storedDate, storedTaskType,storedTaskStatus] = rows[i];
         console.log('storedJobCode:', storedJobCode);
         console.log('storedTaskUrl:', storedTaskUrl);
         console.log('jobCode:', jobCode);
         console.log('taskUrl:', taskUrl);
         console.log('taskUrl:', taskStatus);
+
+       
+
+       
 
         if (storedJobCode === jobCode && storedTaskUrl === taskUrl) {
 
@@ -50,6 +57,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       console.log('Rowindex:', rowIndex);
+
+   
       if (rowIndex === -1) {
         // If no matching row was found, append a new row
         await sheets.spreadsheets.values.append({
@@ -64,17 +73,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         // If a matching row was found, update the duration in that row
         console.log("a match was found");
-        const existingDuration = Number(rows[rowIndex][2]);
-        const totalDuration = existingDuration + duration;
-        //Update duration
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: documentId,
-          range: `${range}!C${rowIndex + 1}`, // Update with your Sheet name and column letter for duration
-          valueInputOption: 'USER_ENTERED',
-          resource: {
-            values: [[totalDuration]],
-          },
-        });
+        if (updateDuration) {
+          const existingDuration = Number(rows[rowIndex][2]);
+          const totalDuration = existingDuration + duration;
+          //Update duration
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: documentId,
+            range: `${range}!C${rowIndex + 1}`, // Update with your Sheet name and column letter for duration
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+              values: [[totalDuration]],
+            },
+          });
+        }
         const currentDate = new Date().toLocaleDateString('en-GB'); // Get current date and time in ISO format
         await sheets.spreadsheets.values.update({
           spreadsheetId: documentId,
