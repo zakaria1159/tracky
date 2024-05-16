@@ -24,8 +24,16 @@ const TaskFetcher: React.FC<TaskFetcherProps> = ({ children, trigger }) => {
 
     useEffect(() => {
         const fetchDataFromGoogleSheets = async () => {
+            try {
             const response = await fetch('/api/tasks');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
             const data = await response.json();
+
+            if (!data.jobCodes) {
+                throw new Error('Job codes are missing from the data');
+              }
 
             const tasks = data.jobCodes.map((jobCode: string, index: number) => ({
                 key: String(index),
@@ -42,6 +50,8 @@ const TaskFetcher: React.FC<TaskFetcherProps> = ({ children, trigger }) => {
             
             setTasks(tasks);
             setIsLoading(false);
+        } catch (error) {
+            console.error('There was an error fetching data from Google Sheets:', error);}
         };
 
         fetchDataFromGoogleSheets();

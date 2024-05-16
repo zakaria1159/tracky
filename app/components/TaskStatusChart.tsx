@@ -26,7 +26,7 @@ interface CustomLabelProps {
     name: string;
 }
 
-const COLORS = ['#0088FE', '#FF4500', '#FFBB28', '#FF8042'];
+const COLORS = ['#FF4500', '#0088FE', '#FFBB28', '#FF8042'];
 const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) => (
     <text x={x} y={y} fill={fill} fontSize={12} textAnchor="middle" dominantBaseline="central">
         {`${name}: ${value}`}

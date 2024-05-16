@@ -68,7 +68,7 @@ const CustomContent: React.FC<CustomContentProps> = ({ x, y, width, height, inde
     );
 };
 
-const JobCodeChart: React.FC<JobCodeChartProps> = ({ tasks, width = 200, height = 200, fontSize }) => {
+const JobCodeChart: React.FC<JobCodeChartProps> = ({ tasks, width = 150, height = 150, fontSize }) => {
     const jobCodeCounts = tasks.reduce((counts: { [key: string]: number }, task) => {
         if (task.jobCode) {
             counts[task.jobCode] = (counts[task.jobCode] || 0) + 1;

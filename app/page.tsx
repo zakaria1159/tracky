@@ -4,7 +4,7 @@ import JobCodeFetcher from './components/JobCodeFetcher';
 import TaskFetcher from './components/TaskFetcher';
 import { z } from 'zod';
 
-import { Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin, Modal, Space, InputRef, TableColumnsType, TableColumnType } from 'antd';
+import { Layout, Button, Input, Row, Col, Card, Select, Table, Skeleton, Tooltip, Spin, Modal, Space, InputRef, TableColumnsType, TableColumnType } from 'antd';
 import AverageDurationCard from './components/AverageDurationCard';
 import JobCodeChart from './components/JobCodeChart';
 import { SearchOutlined } from '@ant-design/icons';
@@ -13,6 +13,8 @@ import TaskTypeChart from './components/TaskTypeChart';
 import Highlighter from "react-highlight-words";
 import TaskStatusChart from './components/TaskStatusChart';
 import moment from 'moment';
+import TasksCountChart from './components/TasksCountChart';
+import logo from './images/Tracky.png';
 
 
 
@@ -29,6 +31,9 @@ interface Task {
 }
 
 type DataIndex = keyof Task;
+
+type FilterKey = string | number | bigint | (string | number | bigint)[];
+
 
 interface FilterDropdownProps {
   setSelectedKeys: (keys: any[]) => void;
@@ -58,6 +63,7 @@ const Page = () => {
   const [selectedTaskType, setSelectedTaskType] = useState<string | null | undefined>(null);
   const [isTaskTypeModalVisible, setIsTaskTypeModalVisible] = useState(false);
   const [isTaskStatusModalVisible, setIsTaskStatusModalVisible] = useState(false);
+  const [isTasksCountModalVisible, setIsTaskCountModalVisible] = useState(false);
   const [sortedInfo, setSortedInfo] = React.useState<{ order?: 'descend' | 'ascend', columnKey?: string }>({});
   const [sortedTasks, setSortedTasks] = useState([...tasks]);
 
@@ -65,6 +71,18 @@ const Page = () => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
+
+  const statusFilters = [
+    { text: 'Approved', value: 'Approved' },
+    { text: 'Revision', value: 'Revision' },
+    { text: 'In Review', value: 'In Review' },
+    // Add more statuses as needed...
+  ];
+  const typeFilters = [
+    { text: 'Curation', value: 'Curation' },
+    { text: 'Review', value: 'Review' },
+    // Add more statuses as needed...
+  ];
 
 
 
@@ -210,11 +228,16 @@ const Page = () => {
       width: '5%',
 
       ...getColumnSearchProps('jobCode'),
+      render: (text: string) => <div className="text-xs">{text}</div>
     },
     {
       title: 'Type',
       dataIndex: 'taskType',
       key: 'tasktType',
+      filters: typeFilters,
+      onFilter: (value: boolean | FilterKey, record: Task) =>
+        typeof value === 'string' ? record.taskType ? record.taskType.indexOf(value) === 0 : false : false,
+      render: (text: string) => <div className="text-xs">{text}</div>
 
     },
     {
@@ -254,7 +277,7 @@ const Page = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      sorter: (a: any, b: any) => 
+      sorter: (a: any, b: any) =>
         moment(a.date, "DD/MM/YY").valueOf() - moment(b.date, "DD/MM/YY").valueOf(),
       sortOrder: sortedInfo.columnKey === 'date' ? sortedInfo.order : null,
       render: (date: string | null) => {
@@ -262,54 +285,89 @@ const Page = () => {
           return null;
         }
         return moment(date, "DD/MM/YY").format("DD/MM/YY");
+
       },
+
     },
-  
+
     {
       title: 'Status',
       dataIndex: 'taskStatus',
       key: 'taskStatus',
+      filters: statusFilters,
+      onFilter: (value: boolean | FilterKey, record: Task) =>
+        typeof value === 'string' ? record.taskStatus ? record.taskStatus.indexOf(value) === 0 : false : false,
+      render: (text: string) => <div className="text-xs">{text}</div>
 
     },
     {
       title: 'Action',
       key: 'action',
-
       render: (text: string, record: Task) => (
-        <>
-          <Button disabled={record.taskStatus === 'Approved'} onClick={() => {
-            if (record.jobCode && record.taskUrl) {
-              handleResume(record.jobCode, record.taskUrl, record.taskType || '');
-            }
-          }}>Resume</Button>
-          <Button onClick={() => {
-            if (record.jobCode && record.taskUrl) {
-              handleUpdateStatus(record.jobCode, record.taskUrl);
-            } else {
-              console.error('jobCode or taskUrl is null');
-            }
-          }}>Update Status</Button>
-        </>
+        <div className="flex space-x-4">
+          <Button
+            className="text-xs"
+            disabled={record.taskStatus === 'Approved'}
+            onClick={() => {
+              if (record.jobCode && record.taskUrl) {
+                handleResume(record.jobCode, record.taskUrl, record.taskType || '');
+              }
+            }}
+          >
+            Resume
+          </Button>
+          <Button
+            className="text-xs"
+            disabled={record.taskStatus === 'Approved'}
+            onClick={() => {
+              if (record.jobCode && record.taskUrl) {
+                handleUpdateStatus(record.jobCode, record.taskUrl, 'Approved');
+              } else {
+                console.error('jobCode or taskUrl is null');
+              }
+            }}
+          >
+            Approve
+          </Button>
+          <Button
+            className="text-xs"
+            disabled={record.taskStatus === 'Approved'}
+            onClick={() => {
+              if (record.jobCode && record.taskUrl) {
+                handleUpdateStatus(record.jobCode, record.taskUrl, 'Revision');
+              } else {
+                console.error('jobCode or taskUrl is null');
+              }
+            }}
+          >
+            Revision
+          </Button>
+        </div>
       ),
     },
   ];
 
- 
 
-  const handleUpdateStatus = (jobCode: string, url: string) => {
+
+  const handleUpdateStatus = (jobCode: string, url: string, status: string) => {
     // Update the taskStatus
-    setTaskStatus('Approved');
+    setTaskStatus('status');
 
     // Update the taskStatus in localStorage
     localStorage.setItem('jobCode', jobCode);
     localStorage.setItem('taskUrl', url);
-    localStorage.setItem('taskStatus', 'Approved');
+    localStorage.setItem('taskStatus', status);
 
 
     handleStop(false);
-    setFetchTrigger(fetchTrigger + 1);
+    //setFetchTrigger(fetchTrigger + 1);
+    console.log('fetchTrigger: ', fetchTrigger);
     clearForm();
   }
+
+  useEffect(() => {
+    console.log('fetchTrigger: ', fetchTrigger);
+  }, [fetchTrigger]);
 
   useEffect(() => {
     // This code will run when `taskStatus` changes
@@ -383,9 +441,10 @@ const Page = () => {
 
 
     console.log('Stored values:', { storedStartTime, storedJobCode, storedTaskUrl, storedTaskStatus });
-    if (storedTaskStatus === 'Approved') {
+    if (storedTaskStatus === 'Approved' || storedTaskStatus === 'Revision') {
       const duration = Date.now() - Number(storedStartTime);
       await sendDataToGoogleSheets(storedJobCode, storedTaskUrl, duration, storedDate, storedTaskType, storedTaskStatus, updateDuration);
+      setFetchTrigger(fetchTrigger + 1);
     }
 
     if (storedStartTime !== null && storedJobCode && storedTaskUrl) {
@@ -403,6 +462,7 @@ const Page = () => {
     const storedJobCode = localStorage.getItem('jobCode');
     const storedTaskUrl = localStorage.getItem('taskUrl');
     const storedTaskType = localStorage.getItem('taskType');
+    const storedTaskStatus = localStorage.getItem('taskStatus');
 
     if (storedIsRunning) {
       setIsRunning(true);
@@ -423,6 +483,12 @@ const Page = () => {
     if (storedTaskType) {
       setSelectedTaskType(storedTaskType);
     }
+
+    if (storedTaskStatus) {
+      setTaskStatus(storedTaskStatus);
+    }
+
+
   }, []);
 
   useEffect(() => {
@@ -441,186 +507,233 @@ const Page = () => {
 
   return (
 
+
     isLoading ? (
       <Skeleton active /> // Display the Skeleton component when isLoading is true
     ) : (
-      <Row gutter={16}>
-        <Col xs={24} sm={24} md={8} lg={6} xl={6}>
-          <Card title="Task Info" style={{ minHeight: '300px' }}>
-            <label htmlFor="jobCodeSelect">Job Code</label>
-            <JobCodeFetcher>
-              {(jobCodes) => (
-                <Select
-                  style={{ width: '100%' }} // Set the width to 100%
-                  onChange={code => setSelectedJobCode(code)}
-                  value={selectedJobCode}
-                  disabled={isRunning}
-                >
-                  {jobCodes.map(code => (
-                    <Select.Option key={code} value={code}>
-                      {code}
-                    </Select.Option>
-                  ))}
-                </Select>
-              )}
-            </JobCodeFetcher>
-            <label htmlFor="jobCodeSelect">TaskType</label>
-            <TaskTypeFetcher>
-              {(taskType) => (
-                <Select
-                  style={{ width: '100%' }} // Set the width to 100%
-                  onChange={code => setSelectedTaskType(code)}
-                  value={selectedTaskType}
-                  disabled={isRunning}
-                >
-                  {taskType.map(code => (
-                    <Select.Option key={code} value={code}>
-                      {code}
-                    </Select.Option>
-                  ))}
-                </Select>
-              )}
-            </TaskTypeFetcher>
-            <label htmlFor="taskUrlInput" style={{ marginTop: '10px' }}>Task URL</label>
-            <Input id="taskUrlInput" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-              <Button size="large" type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
-              <Button danger size="large" type="primary" onClick={() => handleStop(true)} disabled={!isRunning}>Stop</Button>
-            </div>
-            {isRunning && (
-              <div className="mt-4 flex items-center justify-center">
-                <Spin size="large" /> {/* This is the larger spinner */}
-                <p className="text-lg text-blue-500 ml-4">Task in progress</p> {/* This is the styled text */}
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={24} md={16} lg={18} xl={18}>
-
-          <Card title="Dashboard" style={{ minHeight: '300px' }}>
-            <div>
-              <TaskFetcher trigger={fetchTrigger}>
-                {(tasks, isLoading) => (
-                  <>
-                    <Row gutter={16} style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
-                      <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
-                        <AverageDurationCard tasks={tasks} />
-                      </Col>
-                      <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
-                        <Card
-                          title="Tasks per JobCode"
-                          style={{ width: '100%' }}
-                          extra={
-                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsModalVisible(true)}>
-
-                            </Button>
-                          }
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <JobCodeChart tasks={tasks} fontSize={5} />
-                          </div>
-                          <Modal
-                            title="Job Code Chart"
-                            visible={isModalVisible}
-                            onOk={() => setIsModalVisible(false)}
-                            onCancel={() => setIsModalVisible(false)}
-                            width={720}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <JobCodeChart tasks={tasks} width={500} height={450} fontSize={12} />
-                            </div>
-                          </Modal>
-                        </Card>
-
-                      </Col>
-                      <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
-                        <Card
-                          title="Tasks per Types"
-                          style={{ width: '100%' }}
-                          extra={
-                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskTypeModalVisible(true)}>
-
-                            </Button>
-                          }
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <TaskTypeChart tasks={tasks} />
-                          </div>
-                          <Modal
-                            title="Task per types"
-                            visible={isTaskTypeModalVisible}
-                            onOk={() => setIsTaskTypeModalVisible(false)}
-                            onCancel={() => setIsTaskTypeModalVisible(false)}
-                            width={720}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <TaskTypeChart tasks={tasks} width={550} height={450} showLabels={true} />
-                            </div>
-                          </Modal>
-                        </Card>
-
-                      </Col>
-                      <Col xs={24} sm={24} md={12} lg={12} xl={6} style={{ marginBottom: '20px', display: 'flex' }}>
-                        <Card
-                          title="Tasks per Status"
-                          style={{ width: '100%' }}
-                          extra={
-                            <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskStatusModalVisible(true)}>
-
-                            </Button>
-                          }
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <TaskStatusChart tasks={tasks} />
-                          </div>
-                          <Modal
-                            title="Task per Status"
-                            visible={isTaskStatusModalVisible}
-                            onOk={() => setIsTaskStatusModalVisible(false)}
-                            onCancel={() => setIsTaskStatusModalVisible(false)}
-                            width={720}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                              <TaskStatusChart tasks={tasks} width={550} height={450} showLabels={true} />
-                            </div>
-                          </Modal>
-                        </Card>
-
-                      </Col>
-                    </Row>
-                    {isLoading ? (
-                      <Skeleton active />
-                    ) : (
-                      <Row>
-                        <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-                          <Space
-                            style={{
-                              marginBottom: 16,
-                            }}
-                          >
-
-
-                          </Space>
-                          <Table
-                            key={fetchTrigger}
-                            dataSource={tasks}
-                            onChange={handleChange}
-                            columns={columns}
-                            size="small"
-                            pagination={{ pageSize: 6 }}
-                            style={{ fontSize: '0.8em' }}
-                            scroll={{ x: 'max-content' }}
-                          />
-                        </Col>
-                      </Row>
-                    )}
-                  </>
+      <Layout>
+        <Layout.Header style={{ height: '50px' }}>
+          <img src={logo.src} alt="Logo" style={{ height: '50px' }} />
+        </Layout.Header>
+        <Layout.Content style={{ padding: '30px', backgroundColor: '#f1efe7' }}>
+          <Row gutter={16}>
+            <Col xs={24} sm={24} md={8} lg={4} xl={4} style={{ marginBottom: '20px', display: 'flex' }}>
+              <Card title="Task Info" style={{ minHeight: '300px' }}>
+                <label htmlFor="jobCodeSelect">Job Code</label>
+                <JobCodeFetcher>
+                  {(jobCodes) => (
+                    <Select
+                      style={{ width: '100%' }} // Set the width to 100%
+                      onChange={code => setSelectedJobCode(code)}
+                      value={selectedJobCode}
+                      disabled={isRunning}
+                    >
+                      {jobCodes.map(code => (
+                        <Select.Option key={code} value={code}>
+                          {code}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  )}
+                </JobCodeFetcher>
+                <label htmlFor="jobCodeSelect">TaskType</label>
+                <TaskTypeFetcher>
+                  {(taskType) => (
+                    <Select
+                      style={{ width: '100%' }} // Set the width to 100%
+                      onChange={code => setSelectedTaskType(code)}
+                      value={selectedTaskType}
+                      disabled={isRunning}
+                    >
+                      {taskType.map(code => (
+                        <Select.Option key={code} value={code}>
+                          {code}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  )}
+                </TaskTypeFetcher>
+                <label htmlFor="taskUrlInput" style={{ marginTop: '10px' }}>Task URL</label>
+                <Input id="taskUrlInput" value={taskUrl || ''} onChange={e => setTaskUrl(e.target.value)} style={{ margin: '10px 0' }} disabled={isRunning} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                  <Button size="large" type="primary" onClick={handleStart} disabled={isRunning} style={{ marginRight: '10px' }}>Start</Button>
+                  <Button danger size="large" type="primary" onClick={() => handleStop(true)} disabled={!isRunning}>Stop</Button>
+                </div>
+                {isRunning && (
+                  <div className="mt-4 flex items-center justify-center">
+                    <Spin size="large" /> {/* This is the larger spinner */}
+                    <p className="text-lg text-blue-500 ml-4">Task in progress</p> {/* This is the styled text */}
+                  </div>
                 )}
-              </TaskFetcher>
-            </div>
-          </Card>
-        </Col>
-      </Row>
+              </Card>
+            </Col>
+            <Col xs={24} sm={24} md={16} lg={20} xl={20}>
+
+              <Card title="Dashboard" style={{ minHeight: '300px' }}>
+                <div>
+                  <TaskFetcher trigger={fetchTrigger}>
+                    {(tasks, isLoading) => (
+                      <>
+                        <Row gutter={16} style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+                          <Col xs={24} sm={24} md={12} lg={12} xl={4} style={{ marginBottom: '20px', display: 'flex' }}>
+
+
+                            <>
+                              {/* Your components */}
+                              <AverageDurationCard tasks={tasks} />
+                              {/* Other components */}
+                            </>
+
+
+                          </Col>
+                          <Col xs={24} sm={24} md={12} lg={12} xl={5} style={{ marginBottom: '20px', display: 'flex' }}>
+                            <Card
+                              title="Tasks per JobCode"
+                              style={{ width: '100%' }}
+                              extra={
+                                <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsModalVisible(true)}>
+
+                                </Button>
+                              }
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <JobCodeChart tasks={tasks} fontSize={5} />
+                              </div>
+                              <Modal
+                                title="Job Code Chart"
+                                visible={isModalVisible}
+                                onOk={() => setIsModalVisible(false)}
+                                onCancel={() => setIsModalVisible(false)}
+                                width={720}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                  <JobCodeChart tasks={tasks} width={500} height={450} fontSize={12} />
+                                </div>
+                              </Modal>
+                            </Card>
+
+                          </Col>
+                          <Col xs={24} sm={24} md={12} lg={12} xl={5} style={{ marginBottom: '20px', display: 'flex' }}>
+                            <Card
+                              title="Tasks per Types"
+                              style={{ width: '100%' }}
+                              extra={
+                                <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskTypeModalVisible(true)}>
+
+                                </Button>
+                              }
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <TaskTypeChart tasks={tasks} />
+                              </div>
+                              <Modal
+                                title="Task per types"
+                                visible={isTaskTypeModalVisible}
+                                onOk={() => setIsTaskTypeModalVisible(false)}
+                                onCancel={() => setIsTaskTypeModalVisible(false)}
+                                width={720}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                  <TaskTypeChart tasks={tasks} width={550} height={450} showLabels={true} />
+                                </div>
+                              </Modal>
+                            </Card>
+
+                          </Col>
+                          <Col xs={24} sm={24} md={12} lg={5} xl={5} style={{ marginBottom: '20px', display: 'flex' }}>
+                            <Card
+                              title="Tasks per Status"
+                              style={{ width: '100%' }}
+                              extra={
+                                <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskStatusModalVisible(true)}>
+
+                                </Button>
+                              }
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <TaskStatusChart tasks={tasks} />
+                              </div>
+                              <Modal
+                                title="Task per Status"
+                                visible={isTaskStatusModalVisible}
+                                onOk={() => setIsTaskStatusModalVisible(false)}
+                                onCancel={() => setIsTaskStatusModalVisible(false)}
+                                width={720}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                  <TaskStatusChart tasks={tasks} width={550} height={450} showLabels={true} />
+                                </div>
+                              </Modal>
+                            </Card>
+
+                          </Col>
+                          <Col xs={24} sm={24} md={12} lg={12} xl={5} style={{ marginBottom: '20px', display: 'flex' }}>
+                            <Card
+                              title="Tasks per Weeks"
+                              style={{ width: '100%' }}
+                              extra={
+                                <Button shape="circle" icon={<SearchOutlined />} onClick={() => setIsTaskCountModalVisible(true)}>
+
+                                </Button>
+                              }
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <TasksCountChart tasks={tasks} />
+                              </div>
+                              <Modal
+                                title="Tasks per Weeks"
+                                visible={isTasksCountModalVisible}
+                                onOk={() => setIsTaskCountModalVisible(false)}
+                                onCancel={() => setIsTaskCountModalVisible(false)}
+                                width={720}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                  <TasksCountChart tasks={tasks} width={500} height={450} />
+                                </div>
+                              </Modal>
+                            </Card>
+
+                          </Col>
+                        </Row>
+                        {isLoading ? (
+                          <Skeleton active />
+                        ) : (
+                          <Row>
+                            <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                              <Space
+                                style={{
+                                  marginBottom: 16,
+                                }}
+                              >
+
+
+                              </Space>
+                              <Table
+                                key={fetchTrigger}
+                                dataSource={tasks}
+                                onChange={handleChange}
+                                columns={columns}
+                                rowClassName={(record) => record.taskStatusPath ? (record.taskStatusPath.includes('Revision') ? 'revision-row' : '') : ''}
+                                size="small"
+                                pagination={{ pageSize: 6 }}
+                                style={{ fontSize: '0.8em' }}
+                                scroll={{ x: 'max-content' }}
+                              />
+                            </Col>
+                          </Row>
+                        )}
+                      </>
+                    )}
+                  </TaskFetcher>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </Layout.Content>
+        <Layout.Footer style={{ textAlign: 'center' }}>
+          Your Footer Content Here
+        </Layout.Footer>
+      </Layout>
 
     )
   );
