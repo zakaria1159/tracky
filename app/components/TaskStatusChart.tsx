@@ -36,7 +36,7 @@ const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) =>
 const TaskStatusChart: React.FC<TaskStatusChartProps> = ({ tasks, width = 160, height = 160, showLabels = false }) => {
 
     const taskStatusCounts = tasks.reduce((counts: { [key: string]: number }, task) => {
-        if (task.taskStatusPath) {
+        if (task.taskStatusPath && task.taskType === 'Curation') {
             const statuses = task.taskStatusPath.split(';');
             const revisionCount = statuses.filter(status => status.trim() === 'Revision').length;
             const approvedCount = statuses.filter(status => status.trim() === 'Approved').length;

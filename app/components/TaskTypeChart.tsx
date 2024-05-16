@@ -11,10 +11,10 @@ interface Task {
 }
 
 interface TaskTypeChartProps {
-  tasks: Task[];
-  width?: number;
-  height?: number;
-  showLabels?: boolean;
+    tasks: Task[];
+    width?: number;
+    height?: number;
+    showLabels?: boolean;
 }
 interface CustomLabelProps {
     x: number;
@@ -22,44 +22,57 @@ interface CustomLabelProps {
     fill: string;
     value: number;
     name: string;
-  }
+}
 
-const COLORS = ['#FF8042', '#00C49F', '#FFBB28', '#FF8042'];
-const CustomLabel : React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) => (
+const COLORS = ['#153448', '#58A399', '#FFBB28', '#FF8042'];
+const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, fill, value, name }) => (
     <text x={x} y={y} fill={fill} fontSize={12} textAnchor="middle" dominantBaseline="central">
-      {`${name}: ${value}`}
+        {`${name}: ${value}`}
     </text>
-  );
+);
 
-const TaskTypeChart: React.FC<TaskTypeChartProps> = ({ tasks, width = 160, height = 160, showLabels = false}) => {
+const TaskTypeChart: React.FC<TaskTypeChartProps> = ({ tasks, width = 160, height = 160, showLabels = false }) => {
     const taskTypeCounts = tasks.reduce((counts: { [key: string]: number }, task) => {
-    if (task.taskType) {
-        counts[task.taskType] = (counts[task.taskType] || 0) + 1;
-    }
-    return counts;
-}, {});
+        if (task.taskType) {
+            counts[task.taskType] = (counts[task.taskType] || 0) + 1;
+        }
+        return counts;
+    }, {});
 
-    const data = Object.entries(taskTypeCounts).map(([taskType, count]) => ({ name: taskType, value: count }));
-    
+    const totalTasks = tasks.length;
+    const data = Object.entries(taskTypeCounts).map(([taskType, count]) => {
+        const percentage = (count / totalTasks) * 100;
+        return { name: taskType, value: count, percentage };
+    });
+
 
     return (
-        <PieChart width={width} height={height}>
-            <Pie
-                dataKey="value"
-                isAnimationActive={false}
-                data={data}
-                cx="50%"
-                cy="50%"
-                outerRadius="90%"
-                fill="#8884d8"
-                label={showLabels ? CustomLabel : undefined}
-            >
+        <div>
+            <PieChart width={width} height={height}>
+                <Pie
+                    dataKey="value"
+                    isAnimationActive={false}
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="90%"
+                    fill="#8884d8"
+                    label={showLabels ? CustomLabel : undefined}
+                >
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                </Pie>
+                <Tooltip />
+            </PieChart>
+            <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>
                 {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <div key={entry.name} style={{ color: COLORS[index % COLORS.length] }}>
+                        {`${entry.name}: ${entry.percentage.toFixed(2)}%`}
+                    </div>
                 ))}
-            </Pie>
-            <Tooltip />
-        </PieChart>
+            </div>
+        </div>
     );
 };
 

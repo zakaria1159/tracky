@@ -512,7 +512,7 @@ const Page = () => {
       <Skeleton active /> // Display the Skeleton component when isLoading is true
     ) : (
       <Layout>
-        <Layout.Header style={{ height: '50px' }}>
+        <Layout.Header style={{ height: '50px', backgroundColor: '#153448' }}>
           <img src={logo.src} alt="Logo" style={{ height: '50px' }} />
         </Layout.Header>
         <Layout.Content style={{ padding: '30px', backgroundColor: '#f1efe7' }}>
@@ -715,7 +715,7 @@ const Page = () => {
                                 columns={columns}
                                 rowClassName={(record) => record.taskStatusPath ? (record.taskStatusPath.includes('Revision') ? 'revision-row' : '') : ''}
                                 size="small"
-                                pagination={{ pageSize: 6 }}
+                                pagination={{ pageSize: 10 }}
                                 style={{ fontSize: '0.8em' }}
                                 scroll={{ x: 'max-content' }}
                               />
