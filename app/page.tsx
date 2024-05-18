@@ -523,6 +523,7 @@ const Page = () => {
                 <JobCodeFetcher>
                   {(jobCodes) => (
                     <Select
+                      showSearch
                       style={{ width: '100%' }} // Set the width to 100%
                       onChange={code => setSelectedJobCode(code)}
                       value={selectedJobCode}
